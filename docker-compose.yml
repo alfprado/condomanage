@@ -1,0 +1,156 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=admin
+    networks:
+      - default
+
+  minioserver:
+    image: minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    container_name: minio
+    command: server /data --console-address ":9001"
+    volumes:
+      - 'minio_data:/data'
+    networks:
+      - default
+
+  notebook:
+    image: jupyter/pyspark-notebook:spark-3.4.1
+    ports:
+      - 8888:8888
+    env_file: .env
+    container_name: notebook
+    volumes:
+      - ./notebook:/home/jovyan/notebook
+    networks:
+      - default
+  
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.5.3
+    container_name: schema-registry
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka:9092
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
+    ports:
+      - 8081:8081
+    depends_on: [zookeeper, kafka]
+    networks:
+      - default
+    volumes:
+      - schema-registry:/bitnami/schema-registry
+      
+  zookeeper:
+    image: quay.io/debezium/zookeeper:2.1
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+    networks:
+      - default
+    volumes:
+      - zookeeper:/bitnami/zookeeper
+
+  kafka:
+    container_name: kafka
+    image: quay.io/debezium/kafka:2.1
+    ports:
+     - 9092:9092
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+    networks:
+      - default
+    depends_on:
+      - zookeeper
+    volumes:
+      - broker:/bitnami/kafka
+
+  connect:
+    container_name: connect
+    image: quay.io/debezium/connect:2.1
+    ports:
+     - 8083:8083
+    depends_on:
+     - kafka
+     - postgres
+     - minioserver
+     - zookeeper
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:9092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
+     - STATUS_STORAGE_TOPIC=my_connect_statuses
+     - CONNECT_PLUGIN_PATH=/usr/share/java,/usr/share/confluent-hub-components,/connectors/
+    volumes:
+      - ./connectors:/connectors
+      - connect:/bitnami/connect
+    networks:
+      - default
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    depends_on:
+      - connect
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
+
+  ksqldb:
+    image: confluentinc/ksqldb-server:0.21.0
+    container_name: ksqldb
+    depends_on:
+      - kafka
+      - connect
+      - schema-registry
+      - zookeeper
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: kafka:29092
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_STREAMS_PRODUCER_MAX_BLOCK_MS: 9223372036854775807
+      KSQL_KSQL_CONNECT_URL: http://connect:8083
+      KSQL_KSQL_SERVICE_ID: confluent_vince_test
+      KSQL_KSQL_HIDDEN_TOPICS: '^_.*'
+    
+networks:
+  default:
+    name: condo_manager
+    #driver: bridge 
+
+volumes:
+  dev-db-data:
+  minio_data:
+    driver: local
+  zookeeper:
+    driver: local
+  broker:
+    driver: local
+  schema-registry:
+    driver: local
+  connect:
+    driver: local

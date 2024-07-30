@@ -1,0 +1,19 @@
+//POST -> localhost:8083/connectors
+
+{
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.dbname": "db",
+        "database.hostname": "postgres",
+        "database.password": "admin",
+        "database.port": "5432",
+        "database.server.name": "postgres",
+        "database.user": "user",
+        "delete.handling.mode": "rewrite",
+        "plugin.name": "pgoutput",
+        "table.include.list": "public.condominios, public.imoveis,public.moradores,public.transacoes",
+        "table.whitelist": "public.condominios, public.imoveis,public.moradores,public.transacoes",
+        "topic.prefix": "postgres"
+    },
+    "name": "postgres-source-connector"
+}

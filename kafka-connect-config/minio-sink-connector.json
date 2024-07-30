@@ -1,0 +1,16 @@
+{
+    "name": "minio-sink-connector",
+    "config": {
+        "connector.class": "io.aiven.kafka.connect.s3.AivenKafkaConnectS3SinkConnector",
+        "aws.access.key.id": "SmRXzZ0KrpROvPSKDddy",
+        "aws.secret.access.key": "ApanXjLP51CxV3bjPqOlankgLDpeoIZyR4xewaOS",
+        "aws.s3.bucket.name": "condomanage",
+        "aws.s3.endpoint": "http://minio:9000",
+        "aws.s3.region": "us-east-1",
+        "format.output.type": "parquet",
+        "topics": "postgres.public.condominios, postgres.public.imoveis, postgres.public.moradores, postgres.public.transacoes",
+        "file.compression.type": "none",
+        "flush.size": "20",
+        "file.name.template": "raw/{{topic}}/{{timestamp:unit=yyyy}}{{timestamp:unit=MM}}{{timestamp:unit=dd}}_{{partition:padding=true}}-{{start_offset:padding=true}}.parquet"
+    }
+}
