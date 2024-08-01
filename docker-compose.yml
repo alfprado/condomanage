@@ -37,21 +37,6 @@ services:
       - ./notebook:/home/jovyan/notebook
     networks:
       - default
-  
-  schema-registry:
-    image: confluentinc/cp-schema-registry:5.5.3
-    container_name: schema-registry
-    environment:
-      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka:9092
-      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
-      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
-    ports:
-      - 8081:8081
-    depends_on: [zookeeper, kafka]
-    networks:
-      - default
-    volumes:
-      - schema-registry:/bitnami/schema-registry
       
   zookeeper:
     image: quay.io/debezium/zookeeper:2.1
@@ -112,30 +97,8 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
-
-  ksqldb:
-    image: confluentinc/ksqldb-server:0.21.0
-    container_name: ksqldb
-    depends_on:
-      - kafka
-      - connect
-      - schema-registry
-      - zookeeper
-    ports:
-      - "8088:8088"
-    environment:
-      KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_BOOTSTRAP_SERVERS: kafka:29092
-      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
-      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
-      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      KSQL_STREAMS_PRODUCER_MAX_BLOCK_MS: 9223372036854775807
-      KSQL_KSQL_CONNECT_URL: http://connect:8083
-      KSQL_KSQL_SERVICE_ID: confluent_vince_test
-      KSQL_KSQL_HIDDEN_TOPICS: '^_.*'
     
 networks:
   default:

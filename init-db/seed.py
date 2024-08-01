@@ -1,5 +1,7 @@
 from faker import Faker
 import random
+import psycopg2
+from psycopg2 import sql
 
 fake = Faker()
 
@@ -42,8 +44,28 @@ moradores = moradores.rstrip(",\n") + ";\n"
 imoveis = imoveis.rstrip(",\n") + ";\n"
 transacoes = transacoes.rstrip(",\n") + ";\n"
 
-# Imprimir os comandos SQL
-print(condominios)
-print(moradores)
-print(imoveis)
-print(transacoes)
+# Função para conectar ao banco de dados
+def connect_to_db():
+    return psycopg2.connect(
+        dbname='db',
+        user='user',
+        password='admin',
+        host='localhost',
+        port='5432'
+    )
+
+# Função para executar comandos SQL
+def execute_sql_commands(commands):
+    conn = connect_to_db()
+    try:
+        with conn.cursor() as cursor:
+            for command in commands:
+                cursor.execute(command)
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+commands = [condominios, moradores, imoveis, transacoes]
+execute_sql_commands(commands)

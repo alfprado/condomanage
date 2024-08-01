@@ -11,6 +11,6 @@
         "topics": "postgres.public.condominios, postgres.public.imoveis, postgres.public.moradores, postgres.public.transacoes",
         "file.compression.type": "none",
         "flush.size": "20",
-        "file.name.template": "raw/{{topic}}/{{timestamp:unit=yyyy}}{{timestamp:unit=MM}}{{timestamp:unit=dd}}_{{partition:padding=true}}-{{start_offset:padding=true}}.parquet"
+        "file.name.template": "raw/cdc/{{topic}}/{{timestamp:unit=yyyy}}{{timestamp:unit=MM}}{{timestamp:unit=dd}}_{{partition:padding=true}}-{{start_offset:padding=true}}.parquet"
     }
 }
