@@ -5,13 +5,13 @@
 ### 1. Iniciar os Contêineres com Docker
 
 ```sh
-docker build -t my-notebook .
 docker-compose up minioserver
 docker-compose up zookeeper
 docker-compose up kafka
 docker-compose up postgres
 docker-compose up connect
 docker-compose up kafka-ui
+docker-compose up notebook
 ```
 
 create an .env file
