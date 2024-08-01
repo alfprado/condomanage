@@ -113,7 +113,5 @@ volumes:
     driver: local
   broker:
     driver: local
-  schema-registry:
-    driver: local
   connect:
     driver: local
